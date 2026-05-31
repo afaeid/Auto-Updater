@@ -1,0 +1,7 @@
+{
+ "isDir": true,
+ "writingDir": "",
+ "executingDir": "",
+ "except":["node_modules",".git","Auto-Updater"],
+ "delay": 2000
+}
