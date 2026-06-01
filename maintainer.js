@@ -38,4 +38,4 @@ const loop = async () => {
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-loop();
+export {loop, config};
