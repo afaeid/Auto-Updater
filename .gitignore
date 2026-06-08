@@ -1,3 +1,9 @@
 node_modules/
 package-lock.json
 .npmignore
+.auto-updater.config.json
+.auto-updater.records.json
+ExecutingDir/
+WritingDir/
+Many hot
+NewWritingDir

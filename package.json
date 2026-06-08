@@ -2,7 +2,7 @@
   "name": "@afaeid/auto-updater",
   "version": "1.0.1",
   "description": "Using this package you can directly copy and paste a directory while writing code.",
-  "main": "maintainer.js",
+  "main": "./cli.js",
   "keywords": [
     "Auto Update"
   ],
@@ -13,6 +13,7 @@
     "auto-updater": "./cli.js"
   },
   "dependencies": {
+    "chalk": "^5.6.2",
     "inquirer": "^14.0.2"
   }
 }

@@ -5,12 +5,14 @@ Using this package you can directly copy and paste a directory while writing cod
 ## Installation
 
 \```bash
-npm install @afaeid/Auto-Updater
+
+npm install @afaeid/auto-updater
+
 \```
 
 ## Usage
 
-Comming soon...
+
 
 ## License
 
