@@ -23,13 +23,16 @@ npx auto-updater <command> [options]
 #### `init`
 Initializes Auto-Updater in the current directory.
 
+> Important: You must run `init` inside the directory you want to mirror.  
+> That current directory is automatically used as the mirror source.
+
 \```bash
 npx auto-updater init
 \```
 
 During initialization, you will be prompted for:
 
-- **Executing directory**: destination directory where files are mirrored.
+- **Executing directory**: destination directory where files are mirrored. You can provide either a relative path (from your current/source directory) or an absolute path.
 - **Exclude folders**: comma-separated folder/file patterns to skip.
 - **Delay (ms)**: watch interval in milliseconds (default: `2000`).
 
