@@ -14,7 +14,7 @@ const ask = async (cwd)=> {
   isInitialized:  true,
   writingDir: cwd, 
   executingDir: answers.executingDir.replaceAll('"', '').replaceAll("'",""),
-  excepts: answers.excepts?.trim() ? answers.excepts.replaceAll('"', '').replaceAll("'", "").split(',').map(v => v.trim()).filter(Boolean) : [".auto-updater"],
+  excepts: answers.excepts?.trim() ? answers.excepts.replaceAll('"', '').replaceAll("'", "").split(',').map(v => v.trim()).filter(Boolean).concat(".auto-updater") : [".auto-updater"],
   delay: answers.delay?.trim() ?  Number(answers.delay) : 2000
  }
  if(!options.executingDir?.trim()){
