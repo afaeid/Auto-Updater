@@ -68,6 +68,7 @@ const run = async (cwd)=>{
       console.log(chalk.yellow(`Updated ${actionHist.updated}`))
       console.log(chalk.red(`Deleted ${actionHist.deleted}`))
       console.log(chalk.bgGreen.white.bold(`Total ${actionHist.created + actionHist.updated + actionHist.deleted} in ${((Date.now() - process.startTime)/1000).toFixed(2)} second(s)`))
+      console.log(chalk.gray("In"), chalk.bold.underline(config.executingDir))
       console.log(chalk.gray("at", new Date().toString()))
       console.log(chalk.green("Watching for change ..."))
 
@@ -88,12 +89,12 @@ const run = async (cwd)=>{
 }
 
 const reset = async (cwd)=>{
-  
-  let config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"))
-  config = JSON.parse(config)
 
-  if(config){
+  try {
 
+     let config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"))
+     config = JSON.parse(config)
+      
       let option = process.argv[3]?.trim()
       let exeDirName = config.executingDir.split("/").at(-1).replace("/","")
 
@@ -123,13 +124,13 @@ const reset = async (cwd)=>{
        }else {
           console.log(chalk.red("This command is not valid."))
          }
-  }else{
+    
+  } catch (e) {
     await error({
       message: "You haven't initialized. Please run 'npx auto-updater init' to initialize",
       code: 1
     })
   }
-
 
 }
 
