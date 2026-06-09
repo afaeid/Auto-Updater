@@ -58,16 +58,11 @@ Options:
 - `--s` (default): remove config and record files only; keep mirrored directory.
 - `--d`: remove config and record files and delete the mirrored directory.
 
-### Summary of CLI options
-
-- `reset --s`
-- `reset --d`
-
 ### Typical workflow
 
 1. `npx auto-updater init`
 2. `npx auto-updater run`
-3. (Optional cleanup) `npx auto-updater reset --s` or `npx auto-updater reset --d`
+3. (Optional cleanup) use `npx auto-updater reset --s` to keep mirrored files, or `npx auto-updater reset --d` to remove everything.
 
 
 ## License
