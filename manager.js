@@ -7,6 +7,8 @@ import { change } from "./changer.js";
 import path from "path";
 import { error } from "./error-handler.js";
 import chalk from "chalk"
+import { currentTast } from "./currentTaskHandler.js";
+import { presentAction } from "./actionPresenter.js";
 
 let config;
 
@@ -14,9 +16,11 @@ const initialize = async (cwd)=>{
 
   process.startTime = Date.now();
 
+  process.stdin.setRawMode(false)
 
   config = await ask(cwd)
 
+  process.stdin.setRawMode(true)
 
   await fs.writeFile(path.resolve(cwd,".auto-updater.config.json"), JSON.stringify(config, null, 2))
 
@@ -30,15 +34,15 @@ const initialize = async (cwd)=>{
     console.log(chalk.yellow("Creating records. Please don't shut down ..."))
     await createRec(records[0], cwd);
 
-    console.log(chalk.green(`Created ${actionHist.created}`))
-    console.log(chalk.yellow(`Updated ${actionHist.updated}`))
-    console.log(chalk.red(`Deleted ${actionHist.deleted}`))
-    console.log(chalk.bgGreen.white.bold(`Total ${actionHist.created + actionHist.updated + actionHist.deleted} in ${((Date.now() - process.startTime)/1000).toFixed(2)} second(s)`))
+    presentAction(actionHist)
 
 }
 
 
+
 const run = async (cwd)=>{
+
+  currentTast("READ_config", "pending", null)
 
   process.startTime = Date.now();
 
@@ -46,33 +50,36 @@ const run = async (cwd)=>{
   config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"));
   config = JSON.parse(config)
 
+  currentTast("READ_config", "success", config)
+
   process["auto-updater"] = {config}
 
   if (config.isInitialized) {
 
+    currentTast("DETECT", "pending", null)
+
     let records = await detect(config, cwd)
+
+    currentTast("DETECT", "success", records)
+
+    currentTast("CHANGE", "pending", null)
   
     records = await change(records)
+
+    currentTast("CHANGE", "success", records)
+
+
+    currentTast("CREATE_records", "pending", records)
+
 
     let actionHist = records[1]
     //console.log(records[1])
     //console.log(records[0])
     await createRec(records[0], cwd)
   
-    
-    
+    currentTast("CREATE_records", "success", records)
 
-    if(actionHist.created > 0 || actionHist.updated > 0 || actionHist.deleted > 0){
 
-      console.log(chalk.green(`Created ${actionHist.created}`))
-      console.log(chalk.yellow(`Updated ${actionHist.updated}`))
-      console.log(chalk.red(`Deleted ${actionHist.deleted}`))
-      console.log(chalk.bgGreen.white.bold(`Total ${actionHist.created + actionHist.updated + actionHist.deleted} in ${((Date.now() - process.startTime)/1000).toFixed(2)} second(s)`))
-      console.log(chalk.gray("In"), chalk.bold.underline(config.executingDir))
-      console.log(chalk.gray("at", new Date().toString()))
-      console.log(chalk.green("Watching for change ..."))
-
-    }
 
    //process.testStTime = Date.now()
    //await new Promise(resolve => setTimeout(resolve, config.delay))

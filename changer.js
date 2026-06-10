@@ -1,6 +1,8 @@
 import fs from "fs/promises";
 import { dirReader } from "./dirReader.js";
 import path from "path";
+import { currentTast } from "./currentTaskHandler.js";
+
 
 let config;
  
@@ -40,6 +42,8 @@ const change = async (records) => {
     deleted: 0
   }
 
+  let processRsrc = {files:[],dirs:[]} 
+
   for (const fileType in records) {
     
     const remaining = [];
@@ -55,6 +59,10 @@ const change = async (records) => {
         remaining.push(record);
         actionHistory.created++
 
+        processRsrc[0][fileType].push(record)
+
+        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
+
       } else if (record.isDir && record.action === "delete") {
 
         await deleteDir(record.destFullPath);
@@ -67,12 +75,20 @@ const change = async (records) => {
         remaining.push(record)
         actionHistory.created++
 
+        processRsrc[0][fileType].push(record)
+
+        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
+
       } else if (!record.isDir && record.action === "update"){
 
         await updateFile(record);
         record.action = null;
         remaining.push(record)
         actionHistory.updated++
+
+        processRsrc[0][fileType].push(record)
+
+        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
 
       } else if (!record.isDir && record.action === "delete"){
 
@@ -83,6 +99,10 @@ const change = async (records) => {
 
         record.action = null;
         remaining.push(record); 
+
+        processRsrc[0][fileType].push(record)
+
+        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
 
       }
 

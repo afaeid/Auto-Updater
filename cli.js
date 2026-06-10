@@ -6,6 +6,42 @@ import { ask } from "./ask.js";
 import { initialize, run, reset } from './manager.js';
 import { error } from './error-handler.js';
 import chalk from 'chalk';
+import { safeExit } from './safeExit.js';
+
+
+process.on("uncaughtException", async (e)=>{
+  error({
+    message: e.message,
+    stack: e.stack,
+    code:1
+  })
+})
+
+process.on("unhandledRejection", async (e)=>{
+  error({
+    message: e.message,
+    stack: e.stack,
+    code:1
+  })
+})
+
+
+
+process.stdin.setRawMode(true)
+
+process.stdin.on("data", async (key)=>{
+
+  if(key.toString() === "\u0003" || key.toString() === "e") {
+    await safeExit(key)
+
+    console.log(chalk.green("Exiting safely..."))
+
+    process.exit(1)
+  }
+  
+})
+
+
 
 try {
 
@@ -24,6 +60,10 @@ if (process.argv[2] === "init") {
  await initialize(process.cwd())
  
  } else if (process.argv[2]=== "run") {
+
+  process["auto-updater"] = {}
+
+  process["auto-updater"].command = "run"
 
   console.log(chalk.green("Watching for change ..."))
 
@@ -54,16 +94,3 @@ catch (e) {
  await error(e)
 }
 
-process.on("uncaughtException", async (e)=>{
-  error({
-    message: e.message,
-    code:1
-  })
-})
-
-process.on("unhandledRejection", async (e)=>{
-  error({
-    message: e.message,
-    code:1
-  })
-})
