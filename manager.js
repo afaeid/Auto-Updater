@@ -12,86 +12,113 @@ import { presentAction } from "./actionPresenter.js";
 
 let config;
 
+const buildReason = (operation, err) => {
+  const code = err?.code ? ` (${err.code})` : "";
+  const target = err?.path ? ` Path: ${err.path}.` : "";
+  const message = err?.message ? ` ${err.message}` : "";
+  return `${operation} failed${code}.${target}${message}`.trim();
+};
+
 const initialize = async (cwd)=>{
+  try {
+    process.startTime = Date.now();
+    process.stdin.setRawMode(false)
 
-  process.startTime = Date.now();
+    config = await ask(cwd)
 
-  process.stdin.setRawMode(false)
+    process.stdin.setRawMode(true)
 
-  config = await ask(cwd)
+    await fs.writeFile(path.resolve(cwd,".auto-updater.config.json"), JSON.stringify(config, null, 2))
 
-  process.stdin.setRawMode(true)
+    let records = await dirReader(config, cwd, "init")
+    
+      console.log(chalk.yellow("Changing records. Please don't shut down ..."))
+      records = await change(records)
 
-  await fs.writeFile(path.resolve(cwd,".auto-updater.config.json"), JSON.stringify(config, null, 2))
+      let actionHist = records[1]
 
-  let records = await dirReader(config, cwd, "init")
-  
-    console.log(chalk.yellow("Changing records. Please don't shut down ..."))
-    records = await change(records)
+      console.log(chalk.yellow("Creating records. Please don't shut down ..."))
+      await createRec(records[0], cwd);
 
-    let actionHist = records[1]
-
-    console.log(chalk.yellow("Creating records. Please don't shut down ..."))
-    await createRec(records[0], cwd);
-
-    presentAction(actionHist)
+      presentAction(actionHist)
+  } catch (e) {
+    process.stdin.setRawMode(true)
+    await error({
+      message: "Initialization failed.",
+      reason: buildReason("initialize()", e),
+      stack: e.stack,
+      code: 1
+    })
+  }
 
 }
 
 
 
 const run = async (cwd)=>{
+  try {
+    currentTast("READ_config", "pending", null)
 
-  currentTast("READ_config", "pending", null)
+    process.startTime = Date.now();
 
-  process.startTime = Date.now();
+    config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"));
+    config = JSON.parse(config)
 
+    currentTast("READ_config", "success", config)
 
-  config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"));
-  config = JSON.parse(config)
+    process["auto-updater"] = {config}
 
-  currentTast("READ_config", "success", config)
+    if (config.isInitialized) {
 
-  process["auto-updater"] = {config}
+      currentTast("DETECT", "pending", null)
 
-  if (config.isInitialized) {
+      let records = await detect(config, cwd)
 
-    currentTast("DETECT", "pending", null)
+      currentTast("DETECT", "success", records)
 
-    let records = await detect(config, cwd)
+      currentTast("CHANGE", "pending", null)
+    
+      records = await change(records)
 
-    currentTast("DETECT", "success", records)
-
-    currentTast("CHANGE", "pending", null)
-  
-    records = await change(records)
-
-    currentTast("CHANGE", "success", records)
-
-
-    currentTast("CREATE_records", "pending", records)
+      currentTast("CHANGE", "success", records)
 
 
-    let actionHist = records[1]
-    //console.log(records[1])
-    //console.log(records[0])
-    await createRec(records[0], cwd)
-  
-    currentTast("CREATE_records", "success", records)
+      currentTast("CREATE_records", "pending", records)
+
+
+      let actionHist = records[1]
+      //console.log(records[1])
+      //console.log(records[0])
+      await createRec(records[0], cwd)
+    
+      currentTast("CREATE_records", "success", records)
 
 
 
-   //process.testStTime = Date.now()
-   //await new Promise(resolve => setTimeout(resolve, config.delay))
-   //console.log("Waited", (Date.now() - process.testStTime)/1000, "seconds")
-   //await run(cwd)
+    //process.testStTime = Date.now()
+    //await new Promise(resolve => setTimeout(resolve, config.delay))
+    //console.log("Waited", (Date.now() - process.testStTime)/1000, "seconds")
+    //await run(cwd)
 
-  }else{
+    }else{
+      await error({
+        message: "Run failed.",
+        reason: "Configuration exists but isInitialized is false. Run 'npx auto-updater init' to initialize again.",
+        code: 1
+      })
+      
+    }
+  } catch (e) {
+    const reason = e?.code === "ENOENT"
+      ? "Config file '.auto-updater.config.json' was not found. Run 'npx auto-updater init' first."
+      : buildReason("run()", e);
+
     await error({
-      message: "You haven't initialized. Please run 'npx auto-updater init' to initialize",
+      message: "Run failed.",
+      reason,
+      stack: e.stack,
       code: 1
     })
-    
   }
 }
 
@@ -109,9 +136,9 @@ const reset = async (cwd)=>{
        if(option === "--d"){
 
           console.log(chalk.yellow("Deleting configs and records"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.records.json"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.config.json"))
-          console.profile(chalk.green("Deleted successfully"))
+          await fs.rm(path.resolve(cwd, ".auto-updater.records.json"), { force: true })
+          await fs.rm(path.resolve(cwd, ".auto-updater.config.json"), { force: true })
+          console.log(chalk.green("Deleted successfully"))
 
           console.log(chalk.yellow("Deleting dir:", chalk.bold(exeDirName)))
           await fs.rm(config.executingDir, {recursive : true, force:true})
@@ -122,19 +149,29 @@ const reset = async (cwd)=>{
 
 
           console.log(chalk.yellow("Deleting configs and records"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.records.json"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.config.json"))
-          console.profile(chalk.green("Deleted successfully"))
+         await fs.rm(path.resolve(cwd, ".auto-updater.records.json"), { force: true })
+         await fs.rm(path.resolve(cwd, ".auto-updater.config.json"), { force: true })
+         console.log(chalk.green("Deleted successfully"))
 
           console.log(chalk.green("Your dir:", chalk.bold(exeDirName), "remains untouched"))
 
        }else {
-          console.log(chalk.red("This command is not valid."))
+         await error({
+           message: "Reset failed.",
+           reason: `Unsupported reset option '${option}'. Use '--s' or '--d'.`,
+           code: 1
+         })
          }
-    
+     
   } catch (e) {
+    const reason = e?.code === "ENOENT"
+      ? "Config file '.auto-updater.config.json' was not found. Run 'npx auto-updater init' first."
+      : buildReason("reset()", e);
+
     await error({
-      message: "You haven't initialized. Please run 'npx auto-updater init' to initialize",
+      message: "Reset failed.",
+      reason,
+      stack: e.stack,
       code: 1
     })
   }
