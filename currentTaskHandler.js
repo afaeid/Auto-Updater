@@ -1,7 +1,7 @@
-const currentTast = (name, status, resourcess)=>{
+const currentTask = (name, status, resourcess) => {
 
-  process["auto-updater"].currentTask = {name, status, resourcess}
+  process["auto-updater"].currentTask = { name, status, resourcess }
 
 }
 
-export {currentTast}
+export { currentTask }

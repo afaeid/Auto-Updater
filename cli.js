@@ -26,7 +26,7 @@ process.on("unhandledRejection", async (e)=>{
 })
 
 
-
+/*
 process.stdin.setRawMode(true)
 
 process.stdin.on("data", async (key)=>{
@@ -39,8 +39,34 @@ process.stdin.on("data", async (key)=>{
     process.exit(1)
   }
   
-})
+})*/
 
+
+
+/*
+process.stdin.setRawMode(true)
+
+process.stdin.on("data", async (key)=>{
+
+  if(key.toString() === "\u0003" || key.toString() === "e") {
+    await safeExit(key)
+
+    console.log(chalk.green("Exiting safely..."))
+
+    process.exit(1)
+  }
+  
+})*/
+
+
+
+/*
+process.on("SIGINT", async ()=> {
+
+  await safeExit()
+  process.exit(0)
+
+})*/
 
 
 try {
@@ -56,23 +82,40 @@ const iterate = async ()=>{
 }
  
 if (process.argv[2] === "init") {
+
+  process["auto-updater"] = {}
+  process["auto-updater"].command = "init"
+
   
  await initialize(process.cwd())
  
  } else if (process.argv[2]=== "run") {
 
+process.stdin.setRawMode(true)
+
+process.stdin.on("data", async (key)=>{
+
+  if(key.toString() === "\u0003" || key.toString().toLocaleLowerCase() === "e") {
+    await safeExit(key)
+
+    console.log(chalk.greenBright("Exiting safely..."))
+
+    process.exit(0)
+  }else if(key.toString().toLocaleLowerCase() === "i") console.log("Config:",process["auto-updater"].config)
+   
+  
+})
+
   process["auto-updater"] = {}
 
   process["auto-updater"].command = "run"
 
-  console.log(chalk.green("Watching for change ..."))
+  console.log(chalk.greenBright("Watching for change ..."))
 
   await run(process.cwd())
 
   await iterate()
- //  console.log(process["auto-updater"].config)    
-  //await new Promise(resolve => setTimeout(resolve, process["auto-updater"].config.delay))
-  //await run(process.cwd())
+ 
 
  }else if(process.argv[2]?.trim() === "reset"){
 

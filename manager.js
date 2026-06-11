@@ -7,138 +7,160 @@ import { change } from "./changer.js";
 import path from "path";
 import { error } from "./error-handler.js";
 import chalk from "chalk"
-import { currentTast } from "./currentTaskHandler.js";
+import { currentTask } from "./currentTaskHandler.js";
 import { presentAction } from "./actionPresenter.js";
 
 let config;
 
-const initialize = async (cwd)=>{
-
-  process.startTime = Date.now();
-
-  process.stdin.setRawMode(false)
+const initialize = async (cwd) => {
 
   config = await ask(cwd)
 
-  process.stdin.setRawMode(true)
+  process.startTime = Date.now();
 
-  await fs.writeFile(path.resolve(cwd,".auto-updater.config.json"), JSON.stringify(config, null, 2))
+  await fs.writeFile(path.resolve(cwd, ".auto-updater.config.json"), JSON.stringify(config, null, 2))
 
   let records = await dirReader(config, cwd, "init")
-  
-    console.log(chalk.yellow("Changing records. Please don't shut down ..."))
-    records = await change(records)
 
-    let actionHist = records[1]
 
-    console.log(chalk.yellow("Creating records. Please don't shut down ..."))
-    await createRec(records[0], cwd);
+  currentTask("CHANGE", "pending", null)
 
-    presentAction(actionHist)
+  console.log(chalk.yellowBright("Changing records. Please don't shut down ..."))
+  records = await change(records)
+
+  currentTask("CHANGE", "success", records)
+
+
+  let actionHist = records[1]
+
+  currentTask("CREATE_records", "pending", null)
+
+  console.log(chalk.yellowBright("Creating records. Please don't shut down ..."))
+  await createRec(records[0], cwd);
+
+  currentTask("CREATE_records", "success", records)
+
+  currentTask("PRESENT_actions","pending", records)
+
+  presentAction(actionHist, config)
+
+  currentTask("PRESENT_actions","success", records)
 
 }
 
 
 
-const run = async (cwd)=>{
+const run = async (cwd) => {
 
-  currentTast("READ_config", "pending", null)
+  try {
+    process.startTime = Date.now();
 
-  process.startTime = Date.now();
+
+    currentTask("READ_config", "pending", null)
+
+    config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"));
+    config = JSON.parse(config)
+
+    currentTask("READ_config", "success", config)
+
+    process["auto-updater"].config = config
 
 
-  config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"));
-  config = JSON.parse(config)
-
-  currentTast("READ_config", "success", config)
-
-  process["auto-updater"] = {config}
-
-  if (config.isInitialized) {
-
-    currentTast("DETECT", "pending", null)
+    currentTask("DETECT", "pending", null)
 
     let records = await detect(config, cwd)
 
-    currentTast("DETECT", "success", records)
+    currentTask("DETECT", "success", records)
 
-    currentTast("CHANGE", "pending", null)
-  
+    currentTask("CHANGE", "pending", null)
+
     records = await change(records)
 
-    currentTast("CHANGE", "success", records)
+    currentTask("CHANGE", "success", records)
 
 
-    currentTast("CREATE_records", "pending", records)
+    currentTask("CREATE_records", "pending", records)
 
 
     let actionHist = records[1]
-    //console.log(records[1])
-    //console.log(records[0])
+
     await createRec(records[0], cwd)
-  
-    currentTast("CREATE_records", "success", records)
 
+    currentTask("CREATE_records", "success", records)
 
+    currentTask("PRESENT_actions","pending", records)
 
-   //process.testStTime = Date.now()
-   //await new Promise(resolve => setTimeout(resolve, config.delay))
-   //console.log("Waited", (Date.now() - process.testStTime)/1000, "seconds")
-   //await run(cwd)
+    presentAction(actionHist, config)
 
-  }else{
-    await error({
-      message: "You haven't initialized. Please run 'npx auto-updater init' to initialize",
-      code: 1
-    })
-    
+    currentTask("PRESENT_actions","success", records)
+
+  } catch (e) {
+
+    if (e.code === "ENOENT") {
+      await error({
+        message: "You haven't initialized. Please run 'npx auto-updater init' to initialize",
+        code: 1
+      })
+    } else {
+
+      await error(e)
+
+    }
+
   }
+
 }
 
-const reset = async (cwd)=>{
+const reset = async (cwd) => {
 
   try {
 
-     let config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"))
-     config = JSON.parse(config)
-      
-      let option = process.argv[3]?.trim()
-      let exeDirName = config.executingDir.split("/").at(-1).replace("/","")
+    let config = await fs.readFile(path.resolve(cwd, ".auto-updater.config.json"))
+    config = JSON.parse(config)
+
+    let option = process.argv[3]?.trim()
+    let exeDirName = config.executingDir.split("/").at(-1).replace("/", "")
 
 
-       if(option === "--d"){
+    if (option === "--d") {
 
-          console.log(chalk.yellow("Deleting configs and records"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.records.json"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.config.json"))
-          console.profile(chalk.green("Deleted successfully"))
+      console.log(chalk.yellowBright("Deleting configs and records"))
+      await fs.rm(path.resolve(cwd, ".auto-updater.records.json"))
+      await fs.rm(path.resolve(cwd, ".auto-updater.config.json"))
+      console.profile(chalk.greenBright("Deleted successfully"))
 
-          console.log(chalk.yellow("Deleting dir:", chalk.bold(exeDirName)))
-          await fs.rm(config.executingDir, {recursive : true, force:true})
-          console.log(chalk.green("Done"))
+      console.log(chalk.redBright("Deleting dir:", chalk.bold(exeDirName)))
+      await fs.rm(config.executingDir, { recursive: true, force: true })
+      console.log(chalk.greenBright("Done"))
 
-       }else if(option === "--s" || !option){
+    } else if (option === "--s" || !option) {
 
 
 
-          console.log(chalk.yellow("Deleting configs and records"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.records.json"))
-          await fs.rm(path.resolve(cwd, ".auto-updater.config.json"))
-          console.profile(chalk.green("Deleted successfully"))
+      console.log(chalk.yellowBright("Deleting configs and records"))
+      await fs.rm(path.resolve(cwd, ".auto-updater.records.json"))
+      await fs.rm(path.resolve(cwd, ".auto-updater.config.json"))
+      console.log(chalk.greenBright("Deleted successfully"))
 
-          console.log(chalk.green("Your dir:", chalk.bold(exeDirName), "remains untouched"))
+      console.log(chalk.greenBright("Your dir:", chalk.bold(exeDirName), "remains untouched"))
 
-       }else {
-          console.log(chalk.red("This command is not valid."))
-         }
-    
+    } else {
+      console.log(chalk.redBright("This command is not valid."))
+    }
+
   } catch (e) {
-    await error({
-      message: "You haven't initialized. Please run 'npx auto-updater init' to initialize",
-      code: 1
-    })
+    if (e.code === "ENOENT") {
+      await error({
+        message: "You haven't initialized. Please run 'npx auto-updater init' to initialize",
+        code: 1
+      })
+    } else {
+
+      await error(e)
+
+    }
   }
 
 }
 
-export {initialize, run, reset}
+export { initialize, run, reset }

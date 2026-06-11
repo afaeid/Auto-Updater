@@ -1,36 +1,36 @@
 import fs from "fs/promises";
 import { dirReader } from "./dirReader.js";
 import path from "path";
-import { currentTast } from "./currentTaskHandler.js";
+import { currentTask } from "./currentTaskHandler.js";
 
 
 let config;
- 
 
-const updateFile = async (data)=> {
+
+const updateFile = async (data) => {
 
   await fs.copyFile(data.fullPath, data.destFullPath)
 }
 
-const createFile = async (data)=> {
-  
-   await fs.mkdir(data.destPath, { recursive: true })
-   await fs.copyFile(data.fullPath, data.destFullPath)
+const createFile = async (data) => {
+
+  await fs.mkdir(data.destPath, { recursive: true })
+  await fs.copyFile(data.fullPath, data.destFullPath)
 }
 
-const deleteFile = async (destFullPath)=> {
+const deleteFile = async (destFullPath) => {
 
-   await fs.rm(destFullPath, {force: true})
+  await fs.rm(destFullPath, { force: true })
 }
 
-const createDir = async (destFullPath)=> {
+const createDir = async (destFullPath) => {
 
-   await fs.mkdir(destFullPath, { recursive: true })
+  await fs.mkdir(destFullPath, { recursive: true })
 }
 
-const deleteDir = async (destFullPath)=> {
-  
-   await fs.rm(destFullPath, {recursive: true, force: true })
+const deleteDir = async (destFullPath) => {
+
+  await fs.rm(destFullPath, { recursive: true, force: true })
 
 }
 
@@ -42,69 +42,69 @@ const change = async (records) => {
     deleted: 0
   }
 
-  let processRsrc = {files:[],dirs:[]} 
+  let processRsrc = { files: [], dirs: [] }
 
   for (const fileType in records) {
-    
+
     const remaining = [];
 
     for (const record of records[fileType]) {
-      
-      if(record){
+
+      if (record) {
 
         if (record.isDir && record.action === "create") {
 
-        await createDir(record.destFullPath);
-        record.action = null;
-        remaining.push(record);
-        actionHistory.created++
+          await createDir(record.destFullPath);
+          record.action = null;
+          remaining.push(record);
+          actionHistory.created++
 
-        processRsrc[0][fileType].push(record)
+          processRsrc[fileType].push(record)
 
-        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
+          currentTask("CHANGE", "processing", [processRsrc, actionHistory])
 
-      } else if (record.isDir && record.action === "delete") {
+        } else if (record.isDir && record.action === "delete") {
 
-        await deleteDir(record.destFullPath);
-        actionHistory.deleted++
+          await deleteDir(record.destFullPath);
+          actionHistory.deleted++
 
-      } else if (!record.isDir && record.action === "create") {
+        } else if (!record.isDir && record.action === "create") {
 
-        await createFile(record);
-        record.action = null;
-        remaining.push(record)
-        actionHistory.created++
+          await createFile(record);
+          record.action = null;
+          remaining.push(record)
+          actionHistory.created++
 
-        processRsrc[0][fileType].push(record)
+          processRsrc[fileType].push(record)
 
-        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
+          currentTask("CHANGE", "processing", [processRsrc, actionHistory])
 
-      } else if (!record.isDir && record.action === "update"){
+        } else if (!record.isDir && record.action === "update") {
 
-        await updateFile(record);
-        record.action = null;
-        remaining.push(record)
-        actionHistory.updated++
+          await updateFile(record);
+          record.action = null;
+          remaining.push(record)
+          actionHistory.updated++
 
-        processRsrc[0][fileType].push(record)
+          processRsrc[fileType].push(record)
 
-        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
+          currentTask("CHANGE", "processing", [processRsrc, actionHistory])
 
-      } else if (!record.isDir && record.action === "delete"){
+        } else if (!record.isDir && record.action === "delete") {
 
-        await deleteFile(record.destFullPath);
-        actionHistory.deleted++
+          await deleteFile(record.destFullPath);
+          actionHistory.deleted++
 
-      }else {
+        } else {
 
-        record.action = null;
-        remaining.push(record); 
+          record.action = null;
+          remaining.push(record);
 
-        processRsrc[0][fileType].push(record)
+          processRsrc[fileType].push(record)
 
-        currentTast("CHANGE", "processing", [processRsrc, actionHistory])
+          currentTask("CHANGE", "processing", [processRsrc, actionHistory])
 
-      }
+        }
 
       }
     }
@@ -115,4 +115,4 @@ const change = async (records) => {
   return [records, actionHistory];
 };
 
-export {change}
+export { change }

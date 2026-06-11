@@ -1,9 +1,9 @@
-import { createRec } from "./recordCreator"
-import { presentAction } from "./actionPresenter"
+import { createRec } from "./recordCreator.js"
+import { presentAction } from "./actionPresenter.js"
 
-const safeExit = async (key)=> {
+const safeExit = async ()=> {
 
-  if(process["auto-updater"].command === "run"){
+  if(process["auto-updater"]?.command === "run" || process["auto-updater"]?.command === "init"){
 
     let currentTask = process["auto-updater"].currentTask
 
@@ -16,7 +16,20 @@ const safeExit = async (key)=> {
     ){
 
       await createRec(currentTask.resources[0])
-      presentAction(currentTask.resources[1])
+      presentAction(currentTask.resources[1], process["auto-updater"].config)
+
+    }
+    else if(
+      (currentTask.name === "CREATE_records" && currentTask.status === "success") || 
+      (currentTask.name === "PRESENT_actions" && currentTask.status === "pending")
+    ){
+
+      presentAction(currentTask.resources[1], process["auto-updater"].config)
+
+    }
+    else{
+
+      return;
 
     }
   }

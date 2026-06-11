@@ -1,130 +1,222 @@
-# Auto-Updater
+# `@afaeid/auto-updater`
 
-A npm package using which you can directly copy and paste a directory while writing code.
+> **Real-time file-mirroring CLI** — write code in one directory, execute it in another, automatically.
+
+![npm](https://img.shields.io/badge/npm-%40afaeid%2Fauto--updater-00ff9d?style=flat-square&logo=npm&logoColor=black)
+![license](https://img.shields.io/badge/license-MIT-00cfff?style=flat-square)
+![platform](https://img.shields.io/badge/platform-Node.js%20CLI-a855f7?style=flat-square&logo=nodedotjs&logoColor=white)
+![platform](https://img.shields.io/badge/runs%20on-Windows%20%7C%20macOS%20%7C%20Linux-00ff9d?style=flat-square)
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [init](#-init)
+  - [run](#-run)
+  - [reset](#-reset)
+- [Typical Workflow](#typical-workflow)
+- [Origin](#origin)
+- [AI-Assisted Development](#ai-assisted-development)
+- [License](#license)
+
+---
+
+## Features
+
+### ⚡ Autonomous Synchronization
+Once the `run` command is dispatched, the executing directory is updated **automatically and continuously** — no manual intervention required. The daemon persists indefinitely until you choose to terminate it.
+
+**Interactive controls during `run`:**
+
+| Key | Action |
+|---|---|
+| `i` | Print current configuration details to the terminal |
+| `e` | Gracefully shut down the daemon |
+| `Ctrl+C` | Gracefully shut down the daemon |
+
+### 🚀 High-Throughput Delta Propagation
+Auto-Updater does not blindly re-copy entire trees. It detects **only the modified portions** of your source directory and propagates those targeted deltas to the mirror destination — making synchronization near-instantaneous even in large projects.
+
+### 🎨 Chromatic Log Output
+Every runtime event is rendered with **color-coded terminal output**. Info, warnings, sync events, and errors each carry a distinct visual signature — making it effortless to scan log streams at a glance rather than parsing monochrome walls of text.
+
+### 📁 Selective Exclusion Patterns
+Define comma-separated exclusion patterns at initialization time. Auto-Updater performs **substring-level pattern matching** — any file or directory whose name contains a matched token (e.g. `.git`, `node_modules`) is silently skipped, keeping your mirror lean.
+
+### 🛡️ Idempotent Bootstrap
+Running `init` on an already-initialized directory is safe. Configuration artifacts are generated deterministically, and the **first full mirror snapshot** is produced immediately on init — so your executing directory is in sync from the very first moment.
+
+### 🔄 Configurable Watch Interval
+Dial in the polling frequency to balance responsiveness against system resource consumption. The watch interval is persisted in the config file and can be tuned per-project without re-running init from scratch.
+
+---
 
 ## Installation
 
-Inatall it locally
+Auto-Updater runs on **any operating system** that supports Node.js — Windows, macOS, and Linux are all fully supported.
 
-\```bash
+Install as a **local project dependency**:
 
+```bash
 npm install @afaeid/auto-updater
+```
 
-\```
+Or install **globally** to invoke from any directory without `npx`:
 
-or, you can also install it globally
-
-\```bash
-
+```bash
 npm i -g @afaeid/auto-updater
+```
 
-\```
+---
 
 ## Usage
 
-The CLI command is:
-
-\```bash
+```bash
+# Local installation
 npx auto-updater <command> [options]
-\```
 
-or, if you installed it globally 
-
-\```bash
+# Global installation
 auto-updater <command> [options]
-\```
+```
 
-### Commands
+---
 
-#### `init`
+### ▶ `init`
 
-Initializes Auto-Updater in the current directory.
+Bootstraps Auto-Updater in the **current working directory**. The directory from which you invoke `init` is automatically designated as the **mirror source** — ensure you are inside the directory you intend to replicate before running this command.
 
-> Important: You must run `init` inside the directory you want to mirror.  
-> That current directory is automatically used as the mirror source.
-
-\```bash
+```bash
 npx auto-updater init
-\```
 
-or, if you installed it globally 
-
-\```bash
+# Global
 auto-updater init
-\```
+```
 
-During initialization, you will be prompted for:
+> **⚠ Important:** Always run `init` from *inside* the source directory you want to mirror.
 
-- **Executing directory**: destination directory where files are mirrored. You can provide either a relative path (from your current/source directory) or an absolute path.
-- **Exclude folders**: comma-separated folder/file patterns to skip. (For example: `.git,node_modules`; This will exclide all the folders and files that contain the part of ".git" or "node_modules" or the name exactly)
-- **Delay (ms)**: watch interval in milliseconds (default: `2000`).
+During initialization, you will be interactively prompted for the following parameters:
 
-This creates:
-- `.auto-updater.config.json` (Contains informations of Configuration)
-- The very first mirror on the certain directory (Executing Directory). This copies all the filles and folders initially.
-- `.auto-updater.records.json` (Contains the records)
+| Parameter | Description | Default |
+|---|---|---|
+| **Executing directory** | Destination path where files are mirrored. Accepts a relative path (resolved from the source) or an absolute path. | _(required)_ |
+| **Exclude patterns** | Comma-separated names or substrings to omit from mirroring (e.g. `.git,node_modules`). Matches partial names. | _(optional)_ |
+| **Watch interval (ms)** | Polling delay in milliseconds between synchronization cycles. | `2000` |
 
-#### `run`
+**Artifacts generated on init:**
 
-Starts synchronization and keeps watching for changes.
+```
+.auto-updater.config.json   ← serialized configuration
+.auto-updater.records.json  ← file-state registry for delta detection
+<executing-directory>/      ← initial full mirror snapshot
+```
 
-\```bash
+---
+
+### ▶ `run`
+
+Dispatches the **synchronization daemon** — continuously polls the source directory, detects mutations, and propagates deltas to the mirror destination. The process remains alive until terminated.
+
+```bash
 npx auto-updater run
-\```
 
-or, if you installed it globally 
-
-\```bash
+# Global
 auto-updater run
-\```
+```
 
+**Interactive controls:**
 
-Requires `.auto-updater.config.json` from `init`.
+| Key | Action |
+|---|---|
+| `i` | Display current configuration details |
+| `e` | Graceful shutdown |
+| `Ctrl+C` | Graceful shutdown |
 
-#### `reset`
+> Requires a valid `.auto-updater.config.json` produced by `init`.
 
-Removes Auto-Updater setup files.
+---
 
-\```bash
-npx auto-updater reset [option]
-\```
+### ▶ `reset`
 
-or, if you installed it globally 
+Tears down the Auto-Updater configuration. Two teardown modes are available:
 
-\```bash
-auto-updater reset [option]
-\```
+```bash
+npx auto-updater reset --s   # Soft teardown  — preserve mirror, remove config
+npx auto-updater reset --d   # Full purge     — remove config and destroy mirror
 
-Options:
+# Global
+auto-updater reset [--s | --d]
+```
 
-- `--s` (default): remove config and record files only; keep mirrored directory.
-- `--d`: remove config and record files and delete the mirrored directory.
+| Flag | Behaviour |
+|---|---|
+| `--s` _(default)_ | Removes `.auto-updater.config.json` and `.auto-updater.records.json`. The mirrored directory and its contents are **preserved**. |
+| `--d` | Removes config, records, **and permanently deletes** the mirror directory. |
 
-### Typical workflow
+---
 
-1. `npx auto-updater init`
-2. `npx auto-updater run`
-3. (Optional cleanup) use `npx auto-updater reset --s` to keep mirrored files, or `npx auto-updater reset --d` to remove everything.
+## Typical Workflow
 
+```
+1.  cd into your source directory
+2.  npx auto-updater init       ← configure mirror target & generate snapshot
+3.  npx auto-updater run        ← start the sync daemon
+        │
+        │  [ write code in SPCK / any editor ]
+        │  [ changes propagate automatically  ]
+        │
+4.  Press e or Ctrl+C           ← terminate the daemon
+5.  npx auto-updater reset --s  ← soft teardown (or --d for full purge)
+```
 
-## AI usage
+---
 
-I used AIs as a helper. Here is it: 
+## Origin
 
-1. Claude for identifying un expected errors
-2. Claude for information that I didn't know but was reqiured to fulfill my project
-3. Github Copilot Coding Agent for making the `Usage` section of this README.md file, though I edited it then.
+The requirement for this tool emerged from a concrete constraint: during an attempt to scaffold an Angular project, installation collapsed because **SPCK Editor** — the local mobile editor in use — does not support symbolic links. This rendered the standard `node_modules` resolution mechanism non-functional within the editor's sandboxed filesystem.
 
-## Why I made this? or, From where the plan came?
+The desired development loop was:
 
-While I strated for Angular it crashed during installation as my local code editor (SPCK Editor) doesn't allow symlinks. So I was barely in need of somethimg that could contaniously update the files on the Termux automatically while writing codes in SPCK Editor. My plan was 
+```
+[ Write code in SPCK Editor ]       ← no node_modules present
+          │
+          │  auto-updater mirrors changes in real time
+          ▼
+[ Project directory in terminal ]   ← node_modules intact, deps resolved
+          │
+          ▼
+[ Execute & test from terminal ]    ← runtime environment is separate
+```
 
-1. Write code in SPCK Editor (Where the node_modules folder will not exist)
-2. Bear them to project folder in Termux
-3. Execute the written code seperately in Termux
+Auto-Updater was built precisely to bridge that gap — decoupling the **authoring environment** from the **execution environment** without any manual file transfer.
 
-So, I made the package meeting those desires.
+---
+
+## AI-Assisted Development
+
+AI tooling was used as a development accelerator — not as a primary author. All logic, architecture, and design decisions were made by the developer.
+
+| Tool | Role |
+|---|---|
+| **Claude** | Diagnosing unexpected runtime errors and edge-case bugs |
+| **Claude** | Supplying technical context on unfamiliar Node.js APIs required during implementation |
+| **GitHub Copilot** | Drafting the initial *Usage* section of this README — subsequently reviewed and revised by the author |
+| **Claude** | Designing and authoring the final README layout, structure, and documentation |
+
+---
 
 ## License
 
-MIT
+```
+MIT License — free to use, modify, and distribute.
+```
+
+---
+
+<div align="center">
+
+`@afaeid/auto-updater` &nbsp;·&nbsp; works on any OS &nbsp;·&nbsp; MIT
+
+</div>

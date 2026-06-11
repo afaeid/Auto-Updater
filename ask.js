@@ -24,8 +24,10 @@ const ask = async (cwd)=> {
     code: 1
   })
   
-  
  }else{
+
+  if(!options.executingDir.startsWith("../") && !options.executingDir.startsWith("/")) options.executingDir = `../${options.executingDir}`
+
   options.executingDir = path.resolve(cwd, options.executingDir)
  }
 
