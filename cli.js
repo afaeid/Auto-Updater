@@ -10,6 +10,8 @@ import { safeExit } from './safeExit.js';
 
 
 process.on("uncaughtException", async (e)=>{
+
+  await safeExit()
   error({
     message: e.message,
     stack: e.stack,
@@ -18,6 +20,8 @@ process.on("uncaughtException", async (e)=>{
 })
 
 process.on("unhandledRejection", async (e)=>{
+
+  await safeExit()
   error({
     message: e.message,
     stack: e.stack,
