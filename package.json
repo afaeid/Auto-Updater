@@ -1,6 +1,6 @@
 {
   "name": "@afaeid/auto-updater",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Using this package you can directly copy and paste a directory while writing code.",
   "main": "./cli.js",
   "keywords": [
