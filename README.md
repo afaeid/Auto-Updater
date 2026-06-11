@@ -5,7 +5,7 @@
 ![npm](https://img.shields.io/badge/npm-%40afaeid%2Fauto--updater-00ff9d?style=flat-square&logo=npm&logoColor=black)
 ![license](https://img.shields.io/badge/license-MIT-00cfff?style=flat-square)
 ![platform](https://img.shields.io/badge/platform-Node.js%20CLI-a855f7?style=flat-square&logo=nodedotjs&logoColor=white)
-![env](https://img.shields.io/badge/built%20for-Termux%20%2F%20Android-00ff9d?style=flat-square)
+![platform](https://img.shields.io/badge/runs%20on-Windows%20%7C%20macOS%20%7C%20Linux-00ff9d?style=flat-square)
 
 ---
 
@@ -27,13 +27,18 @@
 ## Features
 
 ### ⚡ Autonomous Synchronization
-Once the `run` command is dispatched, the executing directory is updated **automatically and continuously** — no manual intervention required. The daemon persists until you consciously terminate it via `e` keypress or `Ctrl+C`.
+Once the `run` command is dispatched, the executing directory is updated **automatically and continuously** — no manual intervention required. The daemon persists indefinitely until you choose to terminate it.
+
+**Interactive controls during `run`:**
+
+| Key | Action |
+|---|---|
+| `i` | Print current configuration details to the terminal |
+| `e` | Gracefully shut down the daemon |
+| `Ctrl+C` | Gracefully shut down the daemon |
 
 ### 🚀 High-Throughput Delta Propagation
 Auto-Updater does not blindly re-copy entire trees. It detects **only the modified portions** of your source directory and propagates those targeted deltas to the mirror destination — making synchronization near-instantaneous even in large projects.
-
-### 🔐 Permission-Preserving Mirroring
-Beyond raw content, Auto-Updater faithfully replicates the **filesystem permission metadata** of every file it mirrors. Your executable bits, read/write flags, and ownership semantics survive the transfer intact — eliminating a common source of silent bugs in cross-environment workflows.
 
 ### 🎨 Chromatic Log Output
 Every runtime event is rendered with **color-coded terminal output**. Info, warnings, sync events, and errors each carry a distinct visual signature — making it effortless to scan log streams at a glance rather than parsing monochrome walls of text.
@@ -50,6 +55,8 @@ Dial in the polling frequency to balance responsiveness against system resource 
 ---
 
 ## Installation
+
+Auto-Updater runs on **any operating system** that supports Node.js — Windows, macOS, and Linux are all fully supported.
 
 Install as a **local project dependency**:
 
@@ -119,10 +126,13 @@ npx auto-updater run
 auto-updater run
 ```
 
-**Termination signals:**
+**Interactive controls:**
 
-- Press `e` — graceful shutdown
-- Press `Ctrl+C` — interrupt signal (`SIGINT`)
+| Key | Action |
+|---|---|
+| `i` | Display current configuration details |
+| `e` | Graceful shutdown |
+| `Ctrl+C` | Graceful shutdown |
 
 > Requires a valid `.auto-updater.config.json` produced by `init`.
 
@@ -174,10 +184,10 @@ The desired development loop was:
           │
           │  auto-updater mirrors changes in real time
           ▼
-[ Project directory in Termux ]     ← node_modules intact, deps resolved
+[ Project directory in terminal ]   ← node_modules intact, deps resolved
           │
           ▼
-[ Execute & test from Termux ]      ← runtime environment is separate
+[ Execute & test from terminal ]    ← runtime environment is separate
 ```
 
 Auto-Updater was built precisely to bridge that gap — decoupling the **authoring environment** from the **execution environment** without any manual file transfer.
@@ -207,6 +217,6 @@ MIT License — free to use, modify, and distribute.
 
 <div align="center">
 
-`@afaeid/auto-updater` &nbsp;·&nbsp; built for Termux &nbsp;·&nbsp; MIT
+`@afaeid/auto-updater` &nbsp;·&nbsp; works on any OS &nbsp;·&nbsp; MIT
 
 </div>
